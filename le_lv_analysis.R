@@ -5,7 +5,7 @@
 #   Function: Life Expectancy Calculations        #
 ###################################################
 
-## code, files, and final .rdata can be accessed via my GitHub repository
+## this code along with its files and generated .rdata can be accessed via my GitHub repository
 # https://github.com/isabelderamos/thesis-sample 
 
 ### loading libraries
@@ -79,10 +79,11 @@ dta <- master_dta %>% mutate(year5=case_when(
          census_region=factor(census_region, levels=c(1:4),
                               labels=c("Northeast", "Midwest", "South", "West")))
 
+
 #~~~~ (5) create le_lv function that calculates life expectancy and lifespan variation  ~~~~#
 le_lv<-function(.x, .y){
   ## .x -> the data with one race and metro
-  # example: .x<-data_baseline %>% filter(metro2=="Metropolitan", race=="H")
+  # example: .x<- dta %>% filter(metro2=="Metropolitan", race=="H")
   ## .y -> a dataframe wtih whichever metro or race category you are looking at
   # using lifetable() function from Camarda to create lifetable 
   lt <- lifetable(x=.x$age_5yr_group, Nx=.x$pop_denom, Dx=.x$count, sex="B", ax=NULL) 
@@ -135,8 +136,7 @@ results_baseline <- dta %>% filter(year5=='2015-2019') %>%
 
 
 ####### table 1: BA_lelv_table ######## 
-# le/lv and absolute/relative differences
-# spreading LE and 95% CIs by metro2 
+# le/lv and absolute/relative differences for each race-metro combination
 BA_lelv_table <- results_baseline %>% 
   mutate(le_ci=paste0(le=format(le, digits=1, nsmall=1), 
                       " (",
@@ -194,7 +194,7 @@ results_longitudinal <- dta %>% group_by(year5, age_5yr_group, metro2, race) %>%
 
 
 ####### table 2: A1_le_table #### 
-# LE longitudinal by race/urbanicity
+# LE longitudinally by race/urbanicity
 df <- results_longitudinal %>% 
   mutate(le_ci=paste0(le=format(le, digits=1, nsmall=1), 
                       " (",
@@ -206,7 +206,7 @@ df <- results_longitudinal %>%
   spread(metro2, le_ci) %>% 
   rename(metro_le_ci=`Metropolitan`,
          nonmetro_le_ci=`Non-metro`) 
-# spreading metro LE, nonmetro LE, then combining
+
 A1_le_table <-
   df %>% select(year5, race, metro_le_ci) %>% 
   spread(year5, metro_le_ci) %>% 
@@ -223,13 +223,13 @@ A1_le_table <-
              nonmetro_2015_2019=`2015-2019`))
 
 ####### table 3: A1_lv_table #### 
-# LV longitudinal by race/urbanicity
+# LV longitudinally by race/urbanicity
 df <- results_longitudinal %>%
   transmute(year5, race, metro2, lv=as.numeric(format(lv, digits=1, nsmall=1))) %>% 
   spread(metro2, lv) %>% 
   rename(metro_lv=`Metropolitan`,
          nonmetro_lv=`Non-metro`) 
-# spreading metro LV, nonmetro LV, then combining
+
 A1_lv_table <-
   df %>% select(year5, race, metro_lv) %>% 
   spread(year5, metro_lv) %>% 
@@ -331,7 +331,6 @@ results_gender <- dta %>% filter(year5=='2015-2019') %>%
 
 ######## figure 3: A2_le_bars ######## 
 # le by race/urbanicity and sex
-# making dataset appropriate for ggplot
 df <- results_baseline %>% ungroup() %>% 
   select(race, metro2, le) %>% 
   full_join(results_gender, by=c("race", "metro2")) %>% 
@@ -367,7 +366,7 @@ A2_le_bars <- ggplot(df, aes(x=race, y=le, fill=as.factor(sex))) +
 
 
 ######## table 4: A2_lelv_table ######## 
-# le/lv by sex
+# le/lv by sex and race/urbanicity
 df <- results_gender %>% 
   mutate(le_ci=paste0(le=format(le, digits=1, nsmall=1), 
                       " (",                      
@@ -410,7 +409,6 @@ A2_lelv_table <- df %>% select(race, sex, metro_le_ci) %>%
 # MvF scatterplot (LE and LV)  
 
 ## first, creating LE scatterplot
-# spreading LE and 95% CIs by sex 
 df <- results_gender %>% full_join(
   results_gender %>% select(race, metro2, sex, le) %>% 
     spread(sex,le) %>% 
@@ -427,7 +425,7 @@ df <- results_gender %>% full_join(
       rename(male_uci=`Male`,
              female_uci=`Female`)) %>% 
   select(race, metro2, sex, male_le, male_lci, male_uci, female_le, female_lci, female_uci)
-# generating scatterplot
+
 A2_le_scatter <- ggplot(df, aes(x=male_le, y=female_le)) +
   #geom_abline(intercept = 0, slope=1, lty=1)+
   geom_line(lty=1, data=data.frame(male_le=seq(70, 90, by=1),
@@ -450,12 +448,11 @@ A2_le_scatter <- ggplot(df, aes(x=male_le, y=female_le)) +
   theme(legend.position="bottom", legend.title=element_blank())
 
 # next, creating LV scatterplot
-# spreading LV by sex 
 df <- results_gender %>% select(race, metro2, sex, lv) %>% 
   spread(sex,lv) %>% 
   rename(male_lv=`Male`,
          female_lv=`Female`)
-# generating scatterplot
+
 A2_lv_scatter <- 
   ggplot(df, aes(x=male_lv, y=female_lv)) +
   # geom_abline(intercept = 0, slope=1, lty=1)+
@@ -517,7 +514,8 @@ A3_le_table <- results_urbanicity %>%
 
 ######## table 6: A3_lv_table ######## 
 # lv by race/urbanicity (6 metro categories)
-A3_lv_table <- results_urbanicity %>% transmute(race, metro6, lv=as.numeric(format(lv, digits=1, nsmall=1))) %>% 
+A3_lv_table <- results_urbanicity %>% 
+  transmute(race, metro6, lv=as.numeric(format(lv, digits=1, nsmall=1))) %>% 
   spread(metro6, lv)
 
 

@@ -5,7 +5,7 @@
 #   Function: Life Expectancy Data Preparation    #
 ###################################################
 
-## code, files, and final .rdata can be accessed via my GitHub repository
+## this code along with its files and generated .rdata can be accessed via my GitHub repository
 # https://github.com/isabelderamos/thesis-sample  
 
 # loading in libraries
@@ -17,7 +17,7 @@ library(purrr)
 
 # NOTE: 1989-2019 raw mortality text files were obtained from NCHS 
 # 1999-2019 were cleaned and exported as .csv's beforehand 
-# these .csv files can be accessed via Drexel BILAL_DP5 server and downloaded onto local computer 
+# these mortality .csv files can be accessed via Drexel BILAL_DP5 server and downloaded onto local computer 
 # as they are too big to upload to GitHub
 
 
@@ -162,8 +162,7 @@ clean_popdenoms <- function(file) {
 ## clean_popdenoms1  fixes problematic FIPS  
 ## (a) fixes FIPS that were renamed over time 
 clean_popdenoms1 <- function(pop_county_tmp) {
-  #pop_county_tmp <- pop_denoms
-  
+
   # (a) fixes FIPS that were renamed over time 
   pop_county_tmp <- pop_county_tmp %>% mutate(fips=ifelse(fips=="46113", "46102", fips)) %>% # fixing 46102
     mutate(fips=ifelse(fips=="51560", "51005", fips)) %>%  # fixing 51560
@@ -234,7 +233,7 @@ crosswalk_metro_regions <- function(nchs_dta_tmp, pop_county_tmp) {
 #################### EXECUTING FUNCTIONS #################### 
 
 
-### For my MS Thesis Project, only examined years 2000-2019
+### For my MS thesis project, only examined years 2000-2019
 mort_files_tmp = df_mort_files %>% filter(between(year, 2000, 2019)) %>% pull(file) 
 
 # clean mortality data
