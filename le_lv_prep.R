@@ -17,7 +17,8 @@ library(purrr)
 
 # NOTE: 1989-2019 raw mortality text files were obtained from NCHS 
 # 1999-2019 were cleaned and exported as .csv's beforehand 
-# these .csv files can be accessed via Drexel BILAL_DP5 server
+# these .csv files can be accessed via Drexel BILAL_DP5 server and downloaded onto local computer 
+# as they are too big to upload to GitHub
 
 
 #################### PREP WORK #################### 
@@ -63,8 +64,8 @@ format_5digfips_v <- Vectorize(format_5dig_fips)
 # race is 5 categories = H, NHB, NHW, NHAIAN, NHAPI
 
 # using bridged_pop_county_asrhLT as it's more appropriate to build life tables with age groups 0,1,5,10
-pop_county <- read.csv("../Data/bridged_pop_county_asrhLT.csv", header = TRUE, sep=",") %>% 
-  as_tibble() %>% 
+load('../Data/bridged_pop_county_asrhLT.rdata')
+pop_county <- pop_county %>% as_tibble() %>% 
   mutate(year=as.character(year),
          fips=as.character(fips),
          age_5yr_group=as.character(age_5yr_group),
