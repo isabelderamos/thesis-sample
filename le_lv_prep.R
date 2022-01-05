@@ -1,7 +1,7 @@
 ###################################################
 #   Author: Isabel De Ramos                       #
 #   Date Created: 4 January 2022                  #
-#   SAMPLE CODE - DATA MANAGEMENT                 #
+#   SAMPLE CODE - DATA MANAGEMENT le_lv_prep.R    #
 #   Function: Life Expectancy Data Preparation    #
 ###################################################
 
@@ -242,7 +242,7 @@ nchs <- clean_nchs1(nchs)
 
 # prepare population denominators
 pop_denoms <- map_dfr(mort_files_tmp, ~clean_popdenoms(.x))
-pop_denoms <- clean_popdenoms1(pop_denoms)
+pop_denoms <- clean_popdenoms1(pop-_denoms)
 
 # create master file by joining mortality and population denominators, and adding urbanicity and geography categorizations
 master_dta <- crosswalk_metro_regions(nchs, pop_denoms)
