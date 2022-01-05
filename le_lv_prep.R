@@ -1,9 +1,12 @@
 ###################################################
 #   Author: Isabel De Ramos                       #
-#   Date Created: 13 December 2021                #
+#   Date Created: 4 January 2022                  #
 #   SAMPLE CODE - DATA MANAGEMENT                 #
 #   Function: Life Expectancy Data Preparation    #
 ###################################################
+
+## code, files, and final .rdata can be accessed via my GitHub repository
+# https://github.com/isabelderamos/thesis-sample  
 
 # loading in libraries
 library(dplyr)
@@ -82,10 +85,10 @@ pop_county <- read.csv("../Data/bridged_pop_county_asrhLT.csv", header = TRUE, s
 clean_nchs <- function(file) {
   #file <- df_mort_files %>% filter(year==2000) %>% pull(file) 
   
-  # NCHS DATASET - isolate all fips / all groups for given year 
+  # isolate all fips / all groups for given year 
   nchs_dta_tmp <- read_csv(file, n_max = Inf) %>% as_tibble() 
   
-  # NCHS DATASET - find counts per age group by race
+  # find counts per age group by race
   nchs_dta_tmp <- nchs_dta_tmp %>% 
     transmute(year=as.character(death_year),
               fips=res_fips_effective18,
@@ -144,7 +147,7 @@ clean_nchs1 <- function(nchs_dta_tmp) {
 clean_popdenoms <- function(file) {
   #file <- df_mort_files %>% filter(year==2000) %>% pull(file) 
   
-  # POP DENOMINATORS - isolate all fips / all groups for given year 
+  # isolate all fips / all groups for given year 
   pop_county_tmp <- pop_county %>% filter(year%in%substr(file, 7,10)) %>%
     group_by(fips, year, age_5yr_group, sex, race) %>% 
     summarise(pop_denom=sum(pop_county)) %>%
@@ -187,40 +190,40 @@ clean_popdenoms1 <- function(pop_county_tmp) {
 
 crosswalk_metro_regions <- function(nchs_dta_tmp, pop_county_tmp) {
   # join mortality (NCHS) to pops (POP DENOMS)
-  county_dta_tmp <- nchs_dta_tmp %>% full_join(pop_county_tmp, by=c("fips", "year", "age_5yr_group", "sex", "race")) %>%
+  final_dta_tmp <- nchs_dta_tmp %>% full_join(pop_county_tmp, by=c("fips", "year", "age_5yr_group", "sex", "race")) %>%
     arrange(fips, year, age_5yr_group, sex, race)
   # creating template to see full combination of fips / age groups / sexes/ races
-  template <- expand_grid(fips=unique(county_dta_tmp$fips), 
-                          age_5yr_group=unique(county_dta_tmp$age_5yr_group),
-                          sex=unique(county_dta_tmp$sex),
-                          race=unique(county_dta_tmp$race)) %>% 
+  template <- expand_grid(fips=unique(final_dta_tmp$fips), 
+                          age_5yr_group=unique(final_dta_tmp$age_5yr_group),
+                          sex=unique(final_dta_tmp$sex),
+                          race=unique(final_dta_tmp$race)) %>% 
     arrange(fips, age_5yr_group, sex, race)
   # replacing NA counts (deaths) with 0 
-  county_dta_tmp <- template %>% full_join(county_dta_tmp, by=c("fips", "age_5yr_group", "sex", "race")) %>%
+  final_dta_tmp <- template %>% full_join(final_dta_tmp, by=c("fips", "age_5yr_group", "sex", "race")) %>%
     fill(year) %>%
     mutate(count=replace_na(count,0)) %>% 
     arrange(fips, year, age_5yr_group, sex, race)
-  ##### ADDING URBANICITY CLASSIFICATION
+  #~~~~~ ADDING URBANICITY CLASSIFICATION ~~~~~#
   # reading in 2013 NCHS urban-rural crosswalk 
   xwalk_fips_urbanrural <- read.csv('../Crosswalks/US/Clean/fips_urbanrural_xwalk.csv',  
                                     sep = ',', header =  T, colClasses = "character") %>% as_tibble() %>%
     transmute(fips=format_5digfips_v(fips),
               `metro6`=`X2013_code`)
   # merging urban-rural codes to data
-  county_dta_tmp <- county_dta_tmp %>% full_join(xwalk_fips_urbanrural, by="fips") %>% 
+  final_dta_tmp <- final_dta_tmp %>% full_join(xwalk_fips_urbanrural, by="fips") %>% 
     # creating `metro_class` column to delineate metropolitan or nonmetropolitan
     mutate(metro2=ifelse(metro6%in%c("1", "2", "3", "4"), "1", "0"))
-  ##### ADDING U.S. CENSUS REGIONS & DIVISIONS CLASSIFICATION
+  #~~~~~ ADDING U.S. CENSUS REGIONS & DIVISIONS CLASSIFICATION ~~~~~#
   # reading in U.S. Census Regions dataset 
   xwalk_census_regions <- read.csv('../Crosswalks/US/Clean/fips_censusregion_xwalk.csv',
                                    sep = ',', header =  T, colClasses = "character") %>% as_tibble() 
-  county_dta_tmp <- county_dta_tmp %>% mutate(state_code=substr(fips, 1, 2)) %>% 
+  final_dta_tmp <- final_dta_tmp %>% mutate(state_code=substr(fips, 1, 2)) %>% 
     full_join(xwalk_census_regions, by="state_code") %>% 
     rename(`census_region`=`region`) %>% 
     select(-state_code, -division)
   # excluding NA data (caused by faulty fips)
-  county_dta_tmp <- county_dta_tmp %>% filter(!is.na(year)==TRUE)
-  print(county_dta_tmp) %>%
+  final_dta_tmp <- final_dta_tmp %>% filter(!is.na(year)==TRUE)
+  print(final_dta_tmp) %>%
     return()
 }
 
@@ -230,13 +233,12 @@ crosswalk_metro_regions <- function(nchs_dta_tmp, pop_county_tmp) {
 #################### EXECUTING FUNCTIONS #################### 
 
 
-### FOR MS THESIS PROJECT, NEED YEARS 2000-2019
+### For my MS Thesis Project, only examined years 2000-2019
 mort_files_tmp = df_mort_files %>% filter(between(year, 2000, 2019)) %>% pull(file) 
 
 # clean mortality data
 nchs <- map_dfr(mort_files_tmp, ~clean_nchs(.x))
 nchs <- clean_nchs1(nchs)
-#nchs <- nchs %>% mutate(age_5yr_group=as.character(age_5yr_group))
 
 # prepare population denominators
 pop_denoms <- map_dfr(mort_files_tmp, ~clean_popdenoms(.x))
